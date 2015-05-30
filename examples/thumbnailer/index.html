@@ -1,0 +1,104 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Preview Thumbnails</title>
+    <style>
+        body { font: 12px/20px sans-serif; margin:0; padding:0; }
+        a { color: #666; }
+        a:hover { color: #C00; }
+        section { box-shadow: 0 0 5px rgba(0,0,0,0.5); }
+        section, footer { width:480px; margin:20px auto; }
+        video { background: #000; cursor:pointer; }
+        footer { text-align: center; color: #666; }
+
+        #bar {
+            position: relative;
+            cursor: pointer;
+            background: #000;
+            color: #CCC;
+            line-height:40px;
+            text-indent: 20px;
+        }
+        #thumb {
+            display: block;
+            position: absolute;
+            visibility: hidden;
+            background-color: #000;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+
+
+<section>
+    <video id="vid" width="480" height="204" poster="assets/sintel.jpg">
+        <source src="https://content.jwplatform.com/videos/q1fx20VZ-kNspJqnJ.mp4" type="video/mp4">
+        <source src="https://content.jwplatform.com/videos/q1fx20VZ-27m5HpIu.webm" type="video/webm">
+        <track src="assets/thumbs.vtt" kind="metadata" default>
+    </video>
+
+    <div id="bar">Mouse over me to see the preview thumbs</div>
+    <span id="thumb"></span>
+</section>
+
+
+
+<script type="text/javascript">
+    var v =  document.querySelector("video");
+    var b =  document.querySelector("#bar");
+    var t =  document.querySelector("#thumb");
+
+    v.addEventListener('click',play,false);
+    v.addEventListener('timeupdate',update,false);
+
+    b.addEventListener('mouseover',show,false);
+    b.addEventListener('mouseout',hide,false);
+    b.addEventListener('mousemove',render,false);
+    b.addEventListener('click',seek,false);
+
+    function play() {
+        if(v.paused) { v.play(); } else { v.pause(); }
+    }
+
+    function update() {
+        var p = v.currentTime/v.duration*100;
+        b.style.background = "linear-gradient(to right, #500 "+p+"%, #000 "+p+"%)";
+    }
+
+    function render(e) {
+        // find the current cue
+        var c = v.textTracks[0].cues;
+        if(!c.length) { return; }
+        var p = (e.pageX-b.offsetLeft) * v.duration / 480;
+        for (var i=0; i<c.length; i++) {
+            if(c[i].startTime <= p && c[i].endTime > p) {
+                break;
+            };
+        }
+        // style the element
+        var xywh = c[i].text.substr(c[i].text.indexOf("=")+1).split(',');
+        t.style.backgroundImage = 'url(assets/'+c[i].text.split('#')[0]+')';
+        t.style.backgroundPosition = '-'+xywh[0]+'px -'+xywh[1]+'px';
+        t.style.left = e.pageX - xywh[2]/2+'px';
+        t.style.top = b.offsetTop - xywh[3]+8+'px';
+        t.style.width = xywh[2]+'px';
+        t.style.height = xywh[3]+'px';
+    };
+
+    function show() {
+        t.style.visibility = 'visible';
+    };
+
+    function hide() {
+        t.style.visibility = 'hidden';
+    };
+
+    function seek(e) {
+        v.currentTime = (e.pageX-b.offsetLeft)*v.duration/480;
+        if(v.paused) { v.play(); }
+    }
+</script>
+
+</body>
+</html>
