@@ -7,6 +7,28 @@ var file = process.argv[2];
 var accuracy = process.argv[3];
 var Global = {};
 
+// pad that shit with a leading zero
+var pad = function (v) {return ('0'+v).substr(-2); }
+
+var secondsToTimeCode = function(s) {
+    // Whatever happened to that? Hmm...
+    // todo:get days,weeks,months,years,decades,centuries,millenia,epoch
+
+    console.log(s);
+    var ms = new Array();
+    ms = s+"".split('.');
+    console.log("now"+ms[1]);
+
+
+    var h = s / 3600 >> 0;
+    s = s % 3600;
+
+    var m = s / 60 >> 0;
+    s = s % 60 >> 0;
+    console.log(s);
+
+    return pad(h) + ":" + pad(m) + ":" + pad(s) + "." + ms;
+}
 
 async.waterfall([
     function(cb){
@@ -45,11 +67,9 @@ async.waterfall([
                     outFrame=parseInt(line,10)*Global.framerate;
                     // 46.800000
                     outTime=line.split('.');
-                    var outSecond=outTime[0];
-                    var outMicrosecond=outTime[1];
-                    var outMinutes=outSecond/60*100+""+outMicrosecond;
-                    console.log(outMinutes);
-                    throw "ere"
+                    var timeCode=secondsToTimeCode(outTime);
+
+                    console.log(timeCode)
                     if (inFrame!=outFrame) {
                         var rand= Math.random() * (100 - 10) + 10;
                         if (outFrame-inFrame<=rand){
@@ -85,6 +105,8 @@ async.waterfall([
                     for (var i = edls.length - 1; i > 0; i--) {
                         melt = melt +" "+ edls[i];
                     }
+                    throw "ere"
+
                     console.log(edls)
 
                     cp.exec('melt '+ melt +' -consumer avformat:/tmp/tmp.mp4',function(err,stdout){

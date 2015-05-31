@@ -86,7 +86,7 @@ var exec = require('sync-exec');
 var videoListing = new Array();
 
 fs.readdir(path,function(err,files){
-    for (var i = files.length - 1; i > -1; i--) {
+    for (var i = files.length - 1; i > 0; i--) {
         var activeFile=files[i];
         var activePath=path + "/" + activeFile;
         var thing  = exec("file -b -k --mime-type  '" + activePath + "' | cut -d'/' -f1")
@@ -108,11 +108,8 @@ fs.readdir(path,function(err,files){
     }
     console.log(videoListing)
     for (var i = videoListing.length - 1; i > -1; i--) {
-        console.log("recombining " + videoListing[i]+ " with previous works")
         exec('melt /tmp/tmp.mp4 '+ videoListing[i]+' -consumer avformat:/tmp/tmp_tmp.mp4')
-        console.log("tracking all works")
-        //exec("node edl.js '/tmp/tmp_tmp.mp4' '0.01'")
-        exec("node edl_dropboring.js '/tmp/tmp_tmp.mp4' '0.01'")
-        console.log(videoListing[i]+ "finished processing")
+        exec("node edl.js '/tmp/tmp_tmp.mp4' '0.01'")
     }
+
 });
