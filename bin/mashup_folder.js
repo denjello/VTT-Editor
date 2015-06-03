@@ -7,7 +7,6 @@ make = function(file,accuracy){
     var liner = require('./liner');
     var Global = {};
 
-
     async.waterfall([
         function(cb){
             // break it into breaks
@@ -82,11 +81,12 @@ var fs = require('fs');
 var cp = require('child_process');
 
 var path = process.argv[2];
+var accuracy = process.argv[3];
 var exec = require('sync-exec');
 var videoListing = new Array();
 
 fs.readdir(path,function(err,files){
-    for (var i = files.length - 1; i > 0; i--) {
+    for (var i = files.length - 1; i > -1; i--) {
         var activeFile=files[i];
         var activePath=path + "/" + activeFile;
         var thing  = exec("file -b -k --mime-type  '" + activePath + "' | cut -d'/' -f1")
@@ -108,8 +108,8 @@ fs.readdir(path,function(err,files){
     }
     console.log(videoListing)
     for (var i = videoListing.length - 1; i > -1; i--) {
-        exec('melt /tmp/tmp.mp4 '+ videoListing[i]+' -consumer avformat:/tmp/tmp_tmp.mp4')
-        exec("node edl.js '/tmp/tmp_tmp.mp4' '0.01'")
+        exec('melt /tmp/tmp.mp4 '+ videoListing[i]+' -consumer avformat:/tmp/tmp_tmp.mp4');
+        exec("node edl_dropboring.js '/tmp/tmp_tmp.mp4' '"+accuracy+"'");
     }
 
 });

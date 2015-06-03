@@ -1,12 +1,10 @@
 var fs = require('fs');
 var cp = require('child_process');
-var sys = require('sys');
 var async = require('async');
 var liner = require('./liner');
 var file = process.argv[2];
 var accuracy = process.argv[3];
 var Global = {};
-
 
 async.waterfall([
     function(cb){
