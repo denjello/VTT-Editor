@@ -1,22 +1,23 @@
-make = function(file,accuracy){
+var fs = require('fs');
+var cp = require('child_process');
+var sys = require('sys');
+var async = require('async');
+var liner = require('./bin/liner');
+var file = process.argv[2];
+var accuracy = process.argv[3];
+var Global = {};
 
-    var fs = require('fs');
-    var cp = require('child_process');
-    var sys = require('sys');
-    var async = require('async');
-    var liner = require('./liner');
-    var Global = {};
 
-    async.waterfall([
-        function(cb){
-            // break it into breaks
-            cp.exec("./analyze.sh "+file+" "+accuracy,function(){
-                cb(null);
-            });
-        },
-        function (cb) {
-            // figure out the framerate
-            console.log("2",file);
+async.waterfall([
+    function(cb){
+        // break it into breaks
+        cp.exec("./analyze.sh "+file+" "+accuracy,function(){
+            cb(null);
+        });
+    },
+    function (cb) {
+        // figure out the framerate
+        console.log("2",file);
 
             cp.exec("mplayer -really-quiet -vo null -ao null -frames 0 -identify " + file + " | grep 'ID_VIDEO_FPS' | cut -d'=' -f2", function (err, stdout) {
                 console.log("framerate: "+stdout);
@@ -69,47 +70,9 @@ make = function(file,accuracy){
                 })
 
             })
-        }]);
-}
+    }]);
 
 
 
 
 
-
-var fs = require('fs');
-var cp = require('child_process');
-
-var path = process.argv[2];
-var accuracy = process.argv[3];
-var exec = require('sync-exec');
-var videoListing = new Array();
-
-fs.readdir(path,function(err,files){
-    for (var i = files.length - 1; i > -1; i--) {
-        var activeFile=files[i];
-        var activePath=path + "/" + activeFile;
-        var thing  = exec("file -b -k --mime-type  '" + activePath + "' | cut -d'/' -f1")
-        if (thing.stdout == "video\n") {
-            //console.log(activePath);
-            var detox = exec("detox '" + activePath + "' -v | grep ' -> ' | cut -d'>' -f2");
-            if (detox.stdout) {
-                activePath= path + "/" +detox.stdout;
-            }
-            videoListing.push(activePath);
-        }
-
-        /* DETOX=$(detox "${fullfile}" -v | grep " -> " | cut -d'>' -f2)
-         if test ${DETOX}; then
-         echo "Original Filename DETOXIFIED"
-         ACTIVEFILE=${DETOX}
-         */
-
-    }
-    console.log(videoListing)
-    for (var i = videoListing.length - 1; i > -1; i--) {
-        exec('melt /tmp/tmp.mp4 '+ videoListing[i]+' -consumer avformat:/tmp/tmp_tmp.mp4');
-        exec("node edl_dropboring.js '/tmp/tmp_tmp.mp4' '"+accuracy+"'");
-    }
-
-});
