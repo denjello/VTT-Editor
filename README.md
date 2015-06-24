@@ -4,8 +4,6 @@ Use VTT files to edit film. Using MELT, ffmpeg and co.
 
 ### Requirements
 
-Because of current requirements (and dev environment), it is likely to only work on Linux. Removing this issue is on the roadmap for version 4.
-
 - mltframework
 - ffmpeg from GIT (compiled with libfaac & libx264)
 - mplayer (cuz its a reliable way to get framerate)
@@ -15,11 +13,17 @@ Because of current requirements (and dev environment), it is likely to only work
 
 ### Install
 
-https://github.com/mltframework/mlt
-https://github.com/ito-suite/node-ito-transcoder/blob/master/bin/build.sh
-http://archive.org/~tracey/downloads/ffmpeg-README.txt
-http://detox.sourceforge.net/
+For Mac Users:
+```
+brew install mlt detox
+```
 
+For Linux Users:
+```
+apt-get update && apt-get install mlt detox
+```
+
+Then:
 ```
 git clone git@github.com:denjello/VTT-Editor.git
 cd VTT-Editor
@@ -27,7 +31,6 @@ npm install
 ```
 
 At the moment there are two main services:
-
 
 #### MASHUP A FOLDER
 ```
