@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ./analyze.sh "assets/test.mp4" 0.4
-# this creates a file with the
+
 
 movie=$1
 sensitivity=$2

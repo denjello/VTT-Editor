@@ -2,9 +2,17 @@
 
 var argv = require('yargs')
         .strict()
-        .wrap(null)
-        .usage('Usage: $0 \n -i [inputfile] \n -o [outputfile] \n -s [sensitivity (0.0001-1)] \n -n [1+] \n -x [1+ && >= n] \n -o [randomorder (true || false)] \n -l [randomlength (true || false) ')
-        .default({s:0.5,r:false,l:false,b:false})
+        .default({
+            s:0.1,
+            r:false,
+            l:false,
+            b:false,
+            y:'linux',
+            v:false,
+            n:1,
+            x:1
+        })
+        .usage('Example: ./$0 -i="/home/user/videos/demo.mp4" -o="test.mp4"')
 
         .demand('inputfile')
         .alias('i', 'inputfile')
@@ -16,9 +24,13 @@ var argv = require('yargs')
         .describe('o','output file with mime suffix')
         .nargs('o', 1)
 
-        .count('verbose')
         .alias('v', 'verbose')
-        .describe('v','Use -v for extra info, -vv or --verbose for debug ')
+        .nargs('v', 1)
+        .describe('v','Use -v for extra info')
+
+        .alias('y', 'system')
+        .nargs('y', 1)
+        .describe('y','Use --system=osx if on mac')
 
         .alias('s', 'sensitivity')
         .nargs('s', 1)
@@ -43,11 +55,7 @@ var argv = require('yargs')
         .alias('b', 'batch')
         .nargs('b', 1)
         .describe('b','If available it will not transcode, but rather return an edl.')
-
-        .example("$0 -i in.mp4 -o out.mp4 -s 0.03 -n 25 -x 25 -rv ","(This uses in.mp4 as the input, creates out.mp4 as its output with a moderately high sensitivity of 0.03, a steady scene length of 25 frames and randomizes the scenes in the output. This will also give some verbose logging.)")
-
         .epilog('Denjell ©2015 - GPLv3')
-        .showHelpOnFail(true)
         .argv,
 
     fs = require('fs'),
@@ -58,23 +66,17 @@ var argv = require('yargs')
     file = argv.i,
     outputfile = argv.o,
     sensitivity = argv.s || 0.5,
-    framemin = argv.n || 1,
+    framemin = argv.n,
     framemax = argv.x,
+    system = argv.y,
     randomOrder =argv.r,
     randomLength = argv.l ,
-    batch = argv.b || false,
+    batch = argv.b,
     outputEdl,
     Global = {};
-
-
     outputEdl = fs.createWriteStream(outputfile+'.edl');
 
-VERBOSE_LEVEL = argv.verbose;
-
-function WARN()  { VERBOSE_LEVEL >= 0 && console.log.apply(console, arguments); }
-function INFO()  { VERBOSE_LEVEL >= 1 && console.log.apply(console, arguments); }
-function DEBUG() { VERBOSE_LEVEL >= 2 && console.log.apply(console, arguments); }
-
+function INFO()  { argv.v && console.log.apply(console, arguments); }
 
 function isNumber(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
@@ -95,7 +97,7 @@ outputEdl.on('open', function() {
     "use strict";
     async.waterfall([
         function(cb){
-            Global.filelisting = detox.file(file,"video");
+            Global.filelisting = detox.file(file,"video",system);
             //if (Global.filelisting == undefined) throw "file not found: " + file;
             cb(null)
         },
@@ -126,8 +128,8 @@ outputEdl.on('open', function() {
                         // the first line is the fps
                         Global.framerate=line;
                         INFO("FPS: "+Global.framerate);
-                        if (framemax == undefined) framemax=Global.framerate;
-                        if (framemin == undefined) framemin=Global.framerate;
+                        if (!framemax) framemax=Global.framerate;
+                        if (!framemin) framemin=Global.framerate;
                     } else {
                         inOUT++; // whether we are at an inframe or an outframe
                         mark=Math.round(line*Global.framerate); // this framenumber
@@ -140,19 +142,22 @@ outputEdl.on('open', function() {
                             //sanity check
                             if (mark > Global.in) {
                                 this.distance=mark - Global.in; // the length of the scene
-                                if (randomLength==true) {
+                                INFO("this.distance: "+this.distance)
+                                if (randomLength) {
                                     var rand= Math.round(Math.random() * (framemax - framemin) + framemin);
+                                    INFO("rand: "+rand)
 
                                     if (this.distance >= rand) {
                                         INFO("this.distance >= rand: " + rand);
 
                                         this.mark=Global.in+rand;
                                         this.line=file + " in=" + Global.in + " out=" + this.mark;
+                                        INFO("this.distance >= rand: " + rand);
+
                                     } else {
                                         this.line=false;
                                     }
-                                    // get the new out-mark
-                                   // && framemin < this.distance
+
                                 } else {
                                     if (this.distance >= framemax && this.distance >= framemin) {
                                         mark=Global.in+framemax;

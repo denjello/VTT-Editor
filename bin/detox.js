@@ -18,16 +18,17 @@ var DETOX = function(file) {
         console.log("err:"+_detox.stderr);
     }
     if (_detox.stdout) {
+        console.log("[detox.js] "+file+ " → " + _detox.stdout);
         file = _detox.stdout;
-        console.log(file);
         return file;
     } else {
-        console.log("not detox'd: "+file);
+        console.log("[detox.js] "+file+" → safe");
         return file;
     }
 };
 
 detox.folder = function (path,filetype) {
+    // currently buggy - not in use
     "use strict";
     var fileListing = new Array();
     fs.readdir(path,function(err,files){
@@ -35,7 +36,8 @@ detox.folder = function (path,filetype) {
             var activeFile=files[i];
             var activePath=path + activeFile;
             if (filetype) {
-                var thing  = exec("file -b -k --mime-type  '" + activePath + "' | cut -d'/' -f1");
+                //var thing  = exec("file -b -k --mime-type  '" + activePath + "' | cut -d'/' -f1");
+                var thing  = exec("xdg-mime query filetype '" + file + "' | cut -d'/' -f1");
                 if (thing.stdout == filetype+"\n") {
                     fileListing.push(DETOX(activePath));
                 }
@@ -46,10 +48,16 @@ detox.folder = function (path,filetype) {
         return fileListing;
     });
 };
-detox.file = function(file,filetype) {
+detox.file = function(file,filetype,system) {
     "use strict";
     if (filetype) {
-        var thing  = exec("file -b -k --mime-type  '" + file + "' | cut -d'/' -f1");
+        var thing;
+        if (system=="osx") {
+            thing  = exec("file -b -k --mime-type  '" + file + "' | cut -d'/' -f1");
+        } else {
+            thing  = exec("xdg-mime query filetype '" + file + "' | cut -d'/' -f1");
+        }
+
         if (thing.stdout == filetype+"\n") {
             return DETOX(file);
         }

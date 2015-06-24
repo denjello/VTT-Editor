@@ -2,9 +2,16 @@
 
 var argv = require('yargs')
         .strict()
-        .wrap(null)
-        .usage('Usage: $0 \n -i [inputfolder] \n -o [outputfile] \n -s [sensitivity (0.0001-1)] \n -n [1+] \n -x [1+ && >= n] \n -o [randomorder (true || false)] \n -l [randomlength (true || false) ')
-        .default({s:0.5,r:false,l:false,b:false})
+        .default({
+            s:0.1,
+            r:false,
+            l:false,
+            b:false,
+            y:'linux',
+            v:false,
+            n:1,
+            x:1
+        })
 
         .demand('inputfolder')
         .alias('i', 'inputfolder')
@@ -16,9 +23,13 @@ var argv = require('yargs')
         .describe('o','output file with mime suffix')
         .nargs('o', 1)
 
-        .count('verbose')
         .alias('v', 'verbose')
-        .describe('v','Use -v for extra info, -vv or --verbose for debug ')
+        .nargs('v', 1)
+        .describe('v','Use -v=true for extra info')
+
+        .alias('y', 'system')
+        .nargs('y', 1)
+        .describe('y','Use --system=osx if on mac')
 
         .alias('s', 'sensitivity')
         .nargs('s', 1)
@@ -44,9 +55,9 @@ var argv = require('yargs')
         .nargs('b', 1)
         .describe('b','If available it will not transcode, but rather return an edl.')
 
-        .example("$0 -i /home/user/Videos/ -o out.mp4 -s 0.03 -n 25 -x 25 -rv","(This uses in.mp4 as the input, creates out.mp4 as its output with a moderately high sensitivity of 0.03, a steady scene length of 25 frames and randomizes the scenes in the output. This will also give some verbose logging.)")
+        .usage('Example: ./$0 -i="/home/user/videos/" -o="test.mp4"')
 
-        .epilog('Denjell ©2015 - GPLv3')
+        .epilog('Denjell [c]2015 - GPLv3')
         .argv,
 
     fs = require('fs'),
@@ -58,20 +69,19 @@ var argv = require('yargs')
     sensitivity = argv.s || 0.5,
     framemin = argv.n || 1,
     framemax = argv.x,
+    system = argv.y,
     randomOrder = argv.r,
     randomLength = argv.l,
     batch = argv.b,
     edlFinal = new Array(),
-    Global = {};
+    Global = new Array();
     Global.fileListing= new Array();
     Global.melt=new Array();
     Global.command="";
 
-VERBOSE_LEVEL = argv.verbose;
 
-function WARN()  { VERBOSE_LEVEL >= 0 && console.log.apply(console, arguments); }
-function INFO()  { VERBOSE_LEVEL >= 1 && console.log.apply(console, arguments); }
-function DEBUG() { VERBOSE_LEVEL >= 2 && console.log.apply(console, arguments); }
+function INFO()  { argv.v && console.log.apply(console, arguments); }
+
 
 
 function isNumber(n) {
@@ -87,22 +97,24 @@ if (!isNumber(sensitivity) || sensitivity <= 0 || sensitivity >= 1) {
     throw "Sensitivity value is wrong."
 }
 
-var videoListing = new Array();
-
 // construct the command line
-var options= " -b "; // turn off individual melt render
-if (framemin) options=options+" -n "+framemin;
-if (framemax) options=options+" -x "+framemax;
-if (sensitivity) options=options+" -s "+sensitivity;
+var options= ""; // turn off individual melt render
+if (framemin) options=options+"-n="+framemin;
+if (framemax) options=options+" -x="+framemax;
+if (sensitivity) options=options+" -s="+sensitivity;
+if (system) options=options+" -y="+system;
 if (randomOrder && randomLength) {
-    options=options+" -rlv "
+    options=options+" -r=true -l=true -v=true -b=true "
 }
-if (randomOrder && !randomLength) {
-    options=options+" -rv "
+else if (randomOrder && !randomLength) {
+    options=options+" -r=true -v=true -b=true "
 }
-if (!randomOrder && randomLength) {
-    options=options+" -lv "
+else if (!randomOrder && randomLength) {
+    options=options+" -l=true -v=true -b=true "
+} else {
+    options=options+" -v=true -b=true "
 }
+
 
 
 INFO("OPTIONS:" + options);
@@ -114,7 +126,7 @@ async.waterfall([
             for (var i = 0; i <= files.length; i++) {
                 var activeFile = files[i];
                 var activePath = path + activeFile;
-                var thing=detox.file(activePath, "video");
+                var thing=detox.file(activePath, "video", system);
                 if(thing) {
                     Global.fileListing.push(thing);
                 }
@@ -127,9 +139,9 @@ async.waterfall([
         for (var i = 0; i < Global.fileListing.length; i++) {
             this.file = Global.fileListing[i];
             if (this.file) {
-                exec("./edl_dropboring.js -i '" +  Global.fileListing[i] + "' -o '" + outputfile + i + "' " + options);
-                INFO("./edl_dropboring.js -i '" +  Global.fileListing[i] + "' -o '" + outputfile + i + "' " + options)
-                this.melt = fs.readFileSync(outputfile+i+'.edl').toString().split('\n');
+                exec("./edl_dropboring.js -i='" +  Global.fileListing[i] + "' -o='/tmp/VTT-" + i + "' " + options);
+                INFO("./edl_dropboring.js -i='" +  Global.fileListing[i] + "' -o='/tmp/VTT-" + i + "' " + options);
+                this.melt = fs.readFileSync('/tmp/VTT-'+i+'.edl').toString().split('\n');
                 for(var x=0;x < this.melt.length; x++) {
                     if (this.melt[x].length != 0) {
                         Global.melt.push(this.melt[x])
@@ -137,9 +149,9 @@ async.waterfall([
                 }
             }
         }
-        INFO("GLOBAL: ",Global.melt)
+        INFO("GLOBAL: ",Global.melt);
 
-        if (randomOrder == true) {
+        if (randomOrder) {
             for (var i = 0; i < Global.melt.length; i++) {
                 console.log(i);
                 var j = Math.floor(Math.random() * (i + 1));
@@ -159,6 +171,7 @@ async.waterfall([
         INFO("edlFinal: " +edlFinal);
         INFO("melt: " + Global.command);
         exec('melt ' + Global.command + ' -consumer avformat:' + outputfile);
+        cb(null);
     }
 ]);
 
