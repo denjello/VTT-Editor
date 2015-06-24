@@ -64,6 +64,7 @@ var argv = require('yargs')
     exec= require('sync-exec'),
     async = require('async'),
     detox = require('./bin/detox'),
+    _path = require('path'),
     path = argv.i,
     outputfile = argv.o,
     sensitivity = argv.s || 0.5,
@@ -125,10 +126,12 @@ async.waterfall([
         fs.readdir(path,function(err,files) {
             for (var i = 0; i <= files.length; i++) {
                 var activeFile = files[i];
-                var activePath = path + activeFile;
-                var thing=detox.file(activePath, "video", system);
-                if(thing) {
-                    Global.fileListing.push(thing);
+                if (activeFile) {
+                    var activePath = _path.join(path, activeFile);
+                    var thing=detox.file(activePath, "video", system);
+                    if(thing) {
+                        Global.fileListing.push(thing);
+                    }
                 }
             }
             cb(null);
