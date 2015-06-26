@@ -1,6 +1,6 @@
 {
   "name": "VTT-Editor",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Use VTT files to edit film. Using MELT, ffmpeg and co.",
   "main": "index.js",
   "directories": {
@@ -21,7 +21,7 @@
   "homepage": "https://github.com/denjello/VTT-Editor",
   "dependencies": {
     "async": "^1.0.0",
-    "readline-sync": "^1.2.17",
+    "readline-sync": "^1.2.19",
     "stream": "0.0.2",
     "sync-exec": "^0.5.0",
     "yargs": "git://github.com/bcoe/yargs"

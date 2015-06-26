@@ -103,7 +103,7 @@ outputEdl.on('open', function() {
         },
         function(cb){
             // get cut points according to sensitivity
-            cp.exec("./bin/./analyze.sh '"+Global.filelisting+"' "+sensitivity, function(){
+            cp.exec("./bin/./analyze.sh '"+Global.filelisting+"' "+sensitivity, {maxBuffer:4000*1024}, function(){
                 cb(null);
             });
         },
@@ -197,7 +197,7 @@ outputEdl.on('open', function() {
 
                     INFO(edls);
                     if(batch==false){
-                        cp.exec('melt ' + melt + ' -consumer avformat:' + outputfile, function (err, stdout) {
+                        cp.exec('melt ' + melt + ' -consumer avformat:' + outputfile,{maxBuffer:4000*1024}, function (err, stdout) {
                             cb(null)
                         });
                     } else {

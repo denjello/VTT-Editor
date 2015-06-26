@@ -23,6 +23,12 @@ var argv = require('yargs')
         .describe('o','output file with mime suffix')
         .nargs('o', 1)
 
+
+        .alias('t', 'interactive')
+        .nargs('t', 1)
+        .describe('t','Use -t=true to ')
+
+
         .alias('v', 'verbose')
         .nargs('v', 1)
         .describe('v','Use -v=true for extra info')
@@ -59,7 +65,7 @@ var argv = require('yargs')
 
         .epilog('Denjell [c]2015 - GPLv3')
         .argv,
-
+    readlineSync = require('readline-sync'),
     fs = require('fs'),
     exec= require('sync-exec'),
     async = require('async'),

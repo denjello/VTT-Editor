@@ -15,12 +15,12 @@ Use VTT files to edit film. Using MELT, ffmpeg and co.
 
 For Mac Users:
 ```
-brew install mlt detox
+brew install mlt detox mplayer
 ```
 
 For Linux Users:
 ```
-apt-get update && apt-get install mlt detox
+apt-get update && apt-get install mlt detox mplayer
 ```
 
 Then:
